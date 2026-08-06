@@ -57,7 +57,8 @@ export default function InvoiceDetailPage() {
     if (!invoice) return;
     const pdfData: PdfData = {
       type: "invoice", documentNumber: invoice.invoice_number, date: formatDate(invoice.issued_date), dueDate: formatDate(invoice.due_date),
-      companyName: "Ideolyte", companyEmail: "hello@ideolyte.com", companyPhone: "+1 (555) 123-4567", companyAddress: "San Francisco, CA",
+      status: invoice.status,
+      companyName: "Ideolyte", companySubtitle: "Digital Solutions & Technology", companyEmail: "hello@ideolyte.com", companyAddress: "Indore • Bengaluru, India",
       clientName: invoice.clients?.profiles?.full_name || "", clientCompany: invoice.clients?.company || "", clientEmail: invoice.clients?.profiles?.email || "",
       projectName: invoice.projects?.name || undefined,
       items: invoice.invoice_items?.map(i => ({ description: i.description, quantity: i.quantity, unitPrice: i.unit_price, total: i.total })) || [],

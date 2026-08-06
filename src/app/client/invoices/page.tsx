@@ -34,7 +34,7 @@ export default function ClientInvoicesPage() {
   function handleDownload(inv: InvoiceWithClient) {
     const pdfData: PdfData = {
       type: "invoice", documentNumber: inv.invoice_number, date: formatDate(inv.issued_date), dueDate: formatDate(inv.due_date),
-      companyName: "Ideolyte", companyEmail: "hello@ideolyte.com", companyPhone: "+1 (555) 123-4567", companyAddress: "San Francisco, CA",
+      companyName: "Ideolyte", companySubtitle: "Digital Solutions & Technology", companyEmail: "hello@ideolyte.com", companyAddress: "Indore • Bengaluru, India",
       clientName: inv.clients?.profiles?.full_name || "", clientCompany: inv.clients?.company || "", clientEmail: inv.clients?.profiles?.email || "",
       projectName: inv.projects?.name || undefined,
       items: inv.invoice_items?.map(i => ({ description: i.description, quantity: i.quantity, unitPrice: i.unit_price, total: i.total })) || [],

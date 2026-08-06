@@ -46,7 +46,7 @@ export default function ClientAgreementPage() {
 
     const pdfData: PdfData = {
       type: "agreement", documentNumber: agr.title, date: agr.signed_date ? formatDate(agr.signed_date) : formatDate(agr.created_at),
-      companyName: "Ideolyte", companyEmail: "hello@ideolyte.com", companyPhone: "+1 (555) 123-4567", companyAddress: "San Francisco, CA",
+      companyName: "Ideolyte", companySubtitle: "Digital Solutions & Technology", companyEmail: "hello@ideolyte.com", companyAddress: "Indore • Bengaluru, India",
       clientName: agr.clients?.profiles?.full_name || "", clientCompany: agr.clients?.company || "", clientEmail: agr.clients?.profiles?.email || "",
       sections, notes: agr.content || undefined,
     };

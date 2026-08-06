@@ -45,9 +45,9 @@ export function BrandLogo({ variant = "full", className }: BrandLogoProps) {
 export const BRAND = {
   name: "Ideolyte",
   product: "Ideolyte Workspace",
+  subtitle: "Digital Solutions & Technology",
   tagline: "Projects. Progress. Partnership.",
   email: "hello@ideolyte.com",
-  phone: "+1 (555) 123-4567",
-  address: "San Francisco, CA",
+  address: "Indore • Bengaluru, India",
   website: "ideolyte.com",
 } as const;
