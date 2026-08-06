@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Users2, FolderKanban, CheckSquare, FileText, Receipt, CreditCard, MessageSquare, HelpCircle, Settings, X } from "lucide-react";
+import { LayoutDashboard, Users, Users2, FolderKanban, CheckSquare, FileText, FileSignature, Receipt, CreditCard, MessageSquare, HelpCircle, Settings, X } from "lucide-react";
 import { cn, getInitials } from "@/lib/utils";
 import { useAuth } from "@/components/providers/auth-provider";
 import { BrandLogo } from "@/components/shared/brand-logo";
@@ -14,6 +14,7 @@ const navItems = [
   { href: "/admin/projects", label: "Projects", icon: FolderKanban },
   { href: "/admin/tasks", label: "Tasks", icon: CheckSquare },
   { href: "/admin/documents", label: "Documents", icon: FileText },
+  { href: "/admin/agreements", label: "Agreements", icon: FileSignature },
   { href: "/admin/invoices", label: "Invoices", icon: Receipt },
   { href: "/admin/payments", label: "Payments", icon: CreditCard },
   { href: "/admin/messages", label: "Messages", icon: MessageSquare },
