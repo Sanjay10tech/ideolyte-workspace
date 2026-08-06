@@ -67,8 +67,8 @@ export default function HomePage() {
                 <div className={`inline-flex h-12 w-12 items-center justify-center rounded-xl ${ws.color} mb-4 group-hover:scale-105 transition-transform`}>
                   <ws.icon className="h-5 w-5" />
                 </div>
-                <h2 className="text-sm font-semibold text-gray-900">{ws.title}</h2>
-                <p className="text-xs text-gray-700 mt-1 mb-5">{ws.description}</p>
+                <h2 className="text-sm font-semibold text-black">{ws.title}</h2>
+                <p className="text-xs text-black/70 mt-1 mb-5">{ws.description}</p>
                 <span className="inline-flex items-center justify-center h-9 px-5 rounded-lg bg-[#1e293b] text-white text-sm font-medium group-hover:bg-[#334155] transition-colors">
                   {ws.buttonLabel}
                 </span>
