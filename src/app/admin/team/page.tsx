@@ -86,13 +86,13 @@ export default function AdminTeamPage() {
         <Button size="sm" onClick={() => { setEditMember(null); setFormOpen(true); }}><Plus className="h-4 w-4 mr-1" /> Add Member</Button>
       </PageHeader>
 
-      <Card>
-        <CardContent className="p-0">
+      <Card className="overflow-visible">
+        <CardContent className="p-0 overflow-visible">
           {loading ? <TableSkeleton rows={5} /> : members.length === 0 ? (
             <EmptyState title="No team members" description="Add your first team member to get started" icon={<Users2 className="h-10 w-10" />} />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            <div className="overflow-visible">
+              <table className="w-full min-w-[600px]">
                 <thead><tr className="border-b border-gray-100">
                   <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">Member</th>
                   <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>

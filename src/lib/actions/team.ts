@@ -246,13 +246,21 @@ export async function getMyTeamProjects() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
 
-  const { data: tm } = await supabase.from("team_members").select("id").eq("profile_id", user.id).single();
-  if (!tm) return [];
+  const { data: tm, error: tmError } = await supabase.from("team_members").select("id").eq("profile_id", user.id).single();
+  if (tmError || !tm) {
+    console.error("getMyTeamProjects: team member not found for user", user.id, tmError?.message);
+    return [];
+  }
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("project_members")
     .select("role_in_project, projects(id, name, status, progress, deadline, description)")
     .eq("team_member_id", (tm as { id: string }).id);
+
+  if (error) {
+    console.error("getMyTeamProjects error:", error.message);
+    return [];
+  }
 
   return (data || []).map((d: { role_in_project: string; projects: unknown }) => ({ ...d.projects as Record<string, unknown>, role_in_project: d.role_in_project }));
 }
@@ -262,12 +270,17 @@ export async function getMyTasks() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
 
+  // Query tasks assigned directly to this user (by profile_id/auth uid)
   const { data, error } = await supabase
     .from("tasks")
     .select("*, projects(name)")
     .eq("assignee_id", user.id)
     .order("created_at", { ascending: false });
-  if (error) return [];
+
+  if (error) {
+    console.error("getMyTasks error:", error.message);
+    return [];
+  }
   return data || [];
 }
 
