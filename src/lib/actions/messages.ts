@@ -47,42 +47,60 @@ export async function getEligibleContacts(): Promise<EligibleContact[]> {
       if (!seen.has(p.id)) { seen.add(p.id); contacts.push({ userId: p.id, name: p.full_name, role: p.role === "team_member" ? "Team" : p.role === "client" ? "Client" : "Admin" }); }
     }
   } else if (role === "client") {
-    // Client: admin + team members on their projects
-    const { data: admins } = await supabase.from("profiles").select("id, full_name").eq("role", "admin");
+    // Client: admin + team members on their projects (single query batch)
+    const { data: admins } = await supabase.from("profiles").select("id, full_name").eq("role", "admin").limit(5);
     for (const a of (admins || []) as { id: string; full_name: string }[]) {
       if (!seen.has(a.id)) { seen.add(a.id); contacts.push({ userId: a.id, name: a.full_name, role: "Admin" }); }
     }
-    // Get client's projects
     const { data: clientRec } = await supabase.from("clients").select("id").eq("profile_id", user.id).single();
     if (clientRec) {
+      // Get all project members across all client's projects in one query
       const { data: projects } = await supabase.from("projects").select("id, name").eq("client_id", (clientRec as { id: string }).id);
-      for (const proj of (projects || []) as { id: string; name: string }[]) {
-        const { data: members } = await supabase.from("project_members").select("team_members(profile_id, profiles(full_name))").eq("project_id", proj.id);
-        for (const m of (members || []) as unknown as { team_members: { profile_id: string; profiles: { full_name: string } } }[]) {
+      const projectIds = (projects || []).map((p: { id: string }) => p.id);
+      if (projectIds.length > 0) {
+        const { data: members } = await supabase.from("project_members").select("project_id, team_members(profile_id, profiles(full_name))").in("project_id", projectIds);
+        const projMap = new Map((projects as { id: string; name: string }[]).map(p => [p.id, p.name]));
+        for (const m of (members || []) as unknown as { project_id: string; team_members: { profile_id: string; profiles: { full_name: string } } }[]) {
           const pid = m.team_members.profile_id;
-          if (!seen.has(pid)) { seen.add(pid); contacts.push({ userId: pid, name: m.team_members.profiles.full_name, role: "Team", projectName: proj.name }); }
+          if (!seen.has(pid)) { seen.add(pid); contacts.push({ userId: pid, name: m.team_members.profiles.full_name, role: "Team", projectName: projMap.get(m.project_id) }); }
         }
       }
     }
   } else if (role === "team_member") {
     // Team member: admin + clients of assigned projects + team on same projects
-    const { data: admins } = await supabase.from("profiles").select("id, full_name").eq("role", "admin");
+    const { data: admins } = await supabase.from("profiles").select("id, full_name").eq("role", "admin").limit(5);
     for (const a of (admins || []) as { id: string; full_name: string }[]) {
       if (!seen.has(a.id)) { seen.add(a.id); contacts.push({ userId: a.id, name: a.full_name, role: "Admin" }); }
     }
-    // Get assigned projects
+    // Get assigned projects with clients and all members in one query
     const { data: tm } = await supabase.from("team_members").select("id").eq("profile_id", user.id).single();
     if (tm) {
-      const { data: assignments } = await supabase.from("project_members").select("project_id, projects(name, client_id, clients(profile_id, profiles(full_name)))").eq("team_member_id", (tm as { id: string }).id);
-      for (const a of (assignments || []) as unknown as { project_id: string; projects: { name: string; client_id: string; clients: { profile_id: string; profiles: { full_name: string } } } }[]) {
-        // Add client
+      const tmId = (tm as { id: string }).id;
+      // Get all my assignments with project+client info
+      const { data: assignments } = await supabase
+        .from("project_members")
+        .select("project_id, projects(name, clients(profile_id, profiles(full_name)))")
+        .eq("team_member_id", tmId);
+
+      const myProjectIds = (assignments || []).map((a: { project_id: string }) => a.project_id);
+
+      // Add clients from assigned projects
+      for (const a of (assignments || []) as unknown as { project_id: string; projects: { name: string; clients: { profile_id: string; profiles: { full_name: string } } } }[]) {
         const cpid = a.projects.clients.profile_id;
         if (!seen.has(cpid)) { seen.add(cpid); contacts.push({ userId: cpid, name: a.projects.clients.profiles.full_name, role: "Client", projectName: a.projects.name }); }
-        // Add other team members on same project
-        const { data: otherMembers } = await supabase.from("project_members").select("team_members(profile_id, profiles(full_name))").eq("project_id", a.project_id).neq("team_member_id", (tm as { id: string }).id);
-        for (const om of (otherMembers || []) as unknown as { team_members: { profile_id: string; profiles: { full_name: string } } }[]) {
+      }
+
+      // Get all team members on all my projects in ONE query
+      if (myProjectIds.length > 0) {
+        const { data: allMembers } = await supabase
+          .from("project_members")
+          .select("project_id, team_members(profile_id, profiles(full_name))")
+          .in("project_id", myProjectIds)
+          .neq("team_member_id", tmId);
+
+        for (const om of (allMembers || []) as unknown as { project_id: string; team_members: { profile_id: string; profiles: { full_name: string } } }[]) {
           const opid = om.team_members.profile_id;
-          if (!seen.has(opid)) { seen.add(opid); contacts.push({ userId: opid, name: om.team_members.profiles.full_name, role: "Team", projectName: a.projects.name }); }
+          if (!seen.has(opid)) { seen.add(opid); contacts.push({ userId: opid, name: om.team_members.profiles.full_name, role: "Team" }); }
         }
       }
     }
@@ -98,9 +116,10 @@ export async function getMessages(otherUserId: string) {
 
   const { data, error } = await supabase
     .from("messages")
-    .select("*, sender:sender_id(full_name), receiver:receiver_id(full_name)")
+    .select("id, sender_id, receiver_id, content, read, created_at, sender:sender_id(full_name), receiver:receiver_id(full_name)")
     .or(`and(sender_id.eq.${user.id},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${user.id})`)
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: true })
+    .limit(50);
 
   if (error) return [];
   return (data || []) as unknown as MessageRow[];
@@ -113,9 +132,10 @@ export async function getConversations() {
 
   const { data } = await supabase
     .from("messages")
-    .select("*, sender:sender_id(full_name), receiver:receiver_id(full_name)")
+    .select("id, sender_id, receiver_id, content, read, created_at, sender:sender_id(full_name), receiver:receiver_id(full_name)")
     .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(100);
 
   if (!data) return [];
 

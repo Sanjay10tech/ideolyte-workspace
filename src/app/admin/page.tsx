@@ -29,10 +29,10 @@ export default function AdminDashboardPage() {
   const load = useCallback(async () => {
     const supabase = createClient();
     const [{ count: clientCount }, { data: projData }, { data: invData }, { data: actData }] = await Promise.all([
-      supabase.from("clients").select("*", { count: "exact", head: true }),
-      supabase.from("projects").select("*, clients(company, profiles(full_name))").order("created_at", { ascending: false }).limit(5),
-      supabase.from("invoices").select("*, clients(profiles(full_name)), projects(name)").in("status", ["pending", "overdue"]).limit(5),
-      supabase.from("activity_logs").select("*").order("created_at", { ascending: false }).limit(6),
+      supabase.from("clients").select("id", { count: "exact", head: true }),
+      supabase.from("projects").select("id, name, status, progress, deadline, clients(company, profiles(full_name))").order("created_at", { ascending: false }).limit(5),
+      supabase.from("invoices").select("id, invoice_number, total_amount, status, clients(profiles(full_name))").in("status", ["pending", "overdue"]).limit(5),
+      supabase.from("activity_logs").select("id, action, entity_type, created_at").order("created_at", { ascending: false }).limit(6),
     ]);
     const allProjects = (projData || []) as unknown as Project[];
     setStats({

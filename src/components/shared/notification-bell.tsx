@@ -16,7 +16,7 @@ export function NotificationBell() {
     setNotifications(data);
   }, []);
 
-  useEffect(() => { load(); const interval = setInterval(load, 30000); return () => clearInterval(interval); }, [load]);
+  useEffect(() => { load(); const interval = setInterval(load, 60000); return () => clearInterval(interval); }, [load]);
 
   async function handleMarkAll() {
     await markAllRead();
