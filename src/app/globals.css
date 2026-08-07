@@ -10,79 +10,22 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: #f7f8fc;
+  color: #1e293b;
 }
 
-/* Dark mode base */
-.dark {
-  color-scheme: dark;
-}
-
-.dark body {
-  background-color: #0f1419;
-  color: #e2e8f0;
-}
-
-/* Smooth scrollbar */
+/* Scrollbar */
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;
 }
-
 ::-webkit-scrollbar-track {
   background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
   background: #e2e8f0;
   border-radius: 3px;
 }
-
-.dark ::-webkit-scrollbar-thumb {
-  background: #334155;
-}
-
 ::-webkit-scrollbar-thumb:hover {
   background: #cbd5e1;
-}
-
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
-}
-
-/* Dark mode overrides for common patterns */
-.dark .bg-\[#f6f8fc\] { background-color: #0f1419; }
-.dark .bg-white { background-color: #1a2332; }
-.dark .bg-slate-50 { background-color: #1e293b; }
-.dark .bg-slate-50\/50 { background-color: rgb(30 41 59 / 0.5); }
-.dark .bg-gray-50 { background-color: #1e293b; }
-.dark .border-slate-100 { border-color: #2d3a4a; }
-.dark .border-slate-200 { border-color: #334155; }
-.dark .border-gray-100 { border-color: #2d3a4a; }
-.dark .border-gray-50 { border-color: #1e293b; }
-.dark .text-slate-900 { color: #f1f5f9; }
-.dark .text-slate-700 { color: #cbd5e1; }
-.dark .text-slate-600 { color: #94a3b8; }
-.dark .text-slate-500 { color: #94a3b8; }
-.dark .text-slate-400 { color: #64748b; }
-.dark .text-gray-900 { color: #f1f5f9; }
-.dark .text-gray-800 { color: #e2e8f0; }
-.dark .text-gray-700 { color: #cbd5e1; }
-.dark .text-gray-600 { color: #94a3b8; }
-.dark .text-gray-500 { color: #94a3b8; }
-.dark .text-gray-400 { color: #64748b; }
-.dark .hover\:bg-slate-50:hover { background-color: #253344; }
-.dark .hover\:bg-gray-50:hover { background-color: #253344; }
-
-/* Dark mode inputs */
-.dark input, .dark select, .dark textarea {
-  background-color: #1e293b;
-  border-color: #334155;
-  color: #e2e8f0;
-}
-.dark input::placeholder, .dark textarea::placeholder {
-  color: #64748b;
-}
-.dark input:disabled {
-  background-color: #0f172a;
-  color: #64748b;
 }
