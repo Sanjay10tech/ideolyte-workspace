@@ -1,7 +1,5 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { LoginPageShell } from "@/components/auth/login-form";
-
-export default function TeamLoginPage() {
-  return <LoginPageShell role="team_member" title="Team Login" />;
+export default function TeamLoginRedirect() {
+  redirect("/");
 }

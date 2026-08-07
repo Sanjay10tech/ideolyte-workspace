@@ -1,7 +1,5 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { LoginPageShell } from "@/components/auth/login-form";
-
-export default function AdminLoginPage() {
-  return <LoginPageShell role="admin" title="Admin Login" />;
+export default function AdminLoginRedirect() {
+  redirect("/");
 }

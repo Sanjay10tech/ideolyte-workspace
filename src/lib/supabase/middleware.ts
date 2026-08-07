@@ -36,12 +36,12 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
-  // Login pages are always accessible (no auth required)
-  const isLoginPage = pathname.startsWith("/login/");
-  const isPublicPage = pathname === "/" || pathname === "/unauthorized";
+  // Login/public pages
+  const isLoginPage = pathname === "/" || pathname.startsWith("/login/");
+  const isPublicPage = pathname === "/unauthorized";
 
   if (isLoginPage || isPublicPage) {
-    // If user is already logged in and visits a login page, redirect to their dashboard
+    // If user is already logged in, redirect to their dashboard
     if (user && isLoginPage) {
       const { data: profile } = await supabase
         .from("profiles")

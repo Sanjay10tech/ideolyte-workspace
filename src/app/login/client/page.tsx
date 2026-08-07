@@ -1,7 +1,5 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { LoginPageShell } from "@/components/auth/login-form";
-
-export default function ClientLoginPage() {
-  return <LoginPageShell role="client" title="Client Login" />;
+export default function ClientLoginRedirect() {
+  redirect("/");
 }
