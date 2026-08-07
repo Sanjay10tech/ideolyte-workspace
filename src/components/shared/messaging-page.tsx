@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { Send, MessageSquare, Plus } from "lucide-react";
+import { Send, MessageSquare, Plus, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -71,30 +71,36 @@ export function MessagingPage() {
     loadMessages(contact.userId, contact.name);
   }
 
+  function handleBack() {
+    setSelectedUserId(null);
+    setSelectedName("");
+    setMessages([]);
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <PageHeader title="Messages" description="Project-based messaging">
-        <Button size="sm" variant="outline" onClick={handleNewMessage}><Plus className="h-3.5 w-3.5 mr-1" /> New Message</Button>
+        <Button size="sm" variant="outline" onClick={handleNewMessage}><Plus className="h-3.5 w-3.5 mr-1" /> <span className="hidden sm:inline">New Message</span><span className="sm:hidden">New</span></Button>
       </PageHeader>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {/* Conversations List */}
-        <Card className="lg:col-span-1">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 h-[calc(100vh-200px)] sm:h-auto">
+        {/* Conversations List — hidden on mobile when chat is open */}
+        <Card className={`lg:col-span-1 ${selectedUserId ? "hidden lg:block" : "block"}`}>
           <CardContent className="p-0">
             <div className="p-3 border-b border-slate-100">
               <p className="text-xs font-medium text-slate-500 uppercase px-1">Conversations</p>
             </div>
-            <div className="divide-y divide-slate-50 max-h-[500px] overflow-y-auto">
+            <div className="divide-y divide-slate-50 max-h-[60vh] lg:max-h-[500px] overflow-y-auto">
               {conversations.length === 0 ? (
                 <div className="p-6 text-center"><p className="text-sm text-slate-400">No conversations yet</p><Button size="sm" variant="outline" className="mt-3 text-xs" onClick={handleNewMessage}>Start a conversation</Button></div>
               ) : conversations.map((conv) => (
                 <div key={conv.userId} onClick={() => loadMessages(conv.userId, conv.name)}
-                  className={`flex items-start gap-3 p-3 cursor-pointer hover:bg-slate-50 transition-colors ${selectedUserId === conv.userId ? "bg-slate-50" : ""} ${conv.unread > 0 ? "bg-blue-50/30" : ""}`}>
+                  className={`flex items-start gap-3 p-3 cursor-pointer hover:bg-slate-50 transition-colors touch-manipulation ${selectedUserId === conv.userId ? "bg-slate-50" : ""} ${conv.unread > 0 ? "bg-blue-50/30" : ""}`}>
                   <Avatar name={conv.name} size="sm" />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-slate-900">{conv.name}</p>
-                      {conv.unread > 0 && <span className="h-5 w-5 flex items-center justify-center rounded-full bg-blue-500 text-[10px] text-white">{conv.unread}</span>}
+                      <p className="text-sm font-medium text-slate-900 truncate">{conv.name}</p>
+                      {conv.unread > 0 && <span className="h-5 w-5 flex items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shrink-0">{conv.unread}</span>}
                     </div>
                     <p className="text-xs text-slate-500 truncate mt-0.5">{conv.lastMessage}</p>
                   </div>
@@ -104,38 +110,39 @@ export function MessagingPage() {
           </CardContent>
         </Card>
 
-        {/* Chat Area */}
-        <Card className="lg:col-span-2 flex flex-col min-h-[500px]">
+        {/* Chat Area — full screen on mobile when conversation selected */}
+        <Card className={`lg:col-span-2 flex flex-col min-h-[400px] lg:min-h-[500px] ${selectedUserId ? "block" : "hidden lg:flex"}`}>
           {!selectedUserId ? (
             <div className="flex-1 flex items-center justify-center">
               <EmptyState title="Select a conversation" description="Choose from the left or start a new message" icon={<MessageSquare className="h-8 w-8" />} />
             </div>
           ) : (
             <>
-              <div className="flex items-center gap-3 p-4 border-b border-slate-100">
+              <div className="flex items-center gap-3 p-3 sm:p-4 border-b border-slate-100">
+                <button onClick={handleBack} className="lg:hidden p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 touch-manipulation"><ArrowLeft className="h-4 w-4" /></button>
                 <Avatar name={selectedName} size="sm" />
-                <p className="text-sm font-medium text-slate-900">{selectedName}</p>
+                <p className="text-sm font-medium text-slate-900 truncate">{selectedName}</p>
               </div>
-              <CardContent className="flex-1 overflow-y-auto p-4 space-y-3">
+              <CardContent className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3">
                 {messages.length === 0 && <p className="text-sm text-slate-400 text-center py-8">No messages yet. Send the first one!</p>}
                 {messages.map((msg) => {
                   const isMe = msg.sender_id === user?.id;
                   return (
-                    <div key={msg.id} className={`flex gap-3 ${isMe ? "justify-end" : ""}`}>
-                      {!isMe && <Avatar name={msg.sender?.full_name || ""} size="sm" />}
-                      <div className={`max-w-[70%] rounded-lg px-4 py-2.5 ${isMe ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-800"}`}>
-                        <p className="text-sm">{msg.content}</p>
-                        <p className={`text-xs mt-1 ${isMe ? "text-blue-200" : "text-slate-400"}`}>{formatDate(msg.created_at)}</p>
+                    <div key={msg.id} className={`flex gap-2 sm:gap-3 ${isMe ? "justify-end" : ""}`}>
+                      {!isMe && <Avatar name={msg.sender?.full_name || ""} size="sm" className="shrink-0" />}
+                      <div className={`max-w-[80%] sm:max-w-[70%] rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 ${isMe ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-800"}`}>
+                        <p className="text-sm break-words">{msg.content}</p>
+                        <p className={`text-[10px] sm:text-xs mt-1 ${isMe ? "text-blue-200" : "text-slate-400"}`}>{formatDate(msg.created_at)}</p>
                       </div>
                     </div>
                   );
                 })}
                 <div ref={chatEndRef} />
               </CardContent>
-              <form onSubmit={handleSend} className="border-t border-slate-100 p-4">
+              <form onSubmit={handleSend} className="border-t border-slate-100 p-3 sm:p-4">
                 <div className="flex items-center gap-2">
-                  <Input placeholder="Type a message..." value={msgInput} onChange={e => setMsgInput(e.target.value)} className="flex-1" disabled={sending} />
-                  <Button size="icon" type="submit" disabled={sending || !msgInput.trim()}><Send className="h-4 w-4" /></Button>
+                  <Input placeholder="Type a message..." value={msgInput} onChange={e => setMsgInput(e.target.value)} className="flex-1 min-w-0" disabled={sending} />
+                  <Button size="icon" type="submit" disabled={sending || !msgInput.trim()} className="shrink-0"><Send className="h-4 w-4" /></Button>
                 </div>
               </form>
             </>
@@ -150,15 +157,15 @@ export function MessagingPage() {
           {contacts.length === 0 ? (
             <p className="text-sm text-slate-500 text-center py-4">No eligible contacts found.</p>
           ) : (
-            <div className="space-y-1 max-h-[300px] overflow-y-auto">
+            <div className="space-y-1 max-h-[50vh] overflow-y-auto">
               {contacts.map((c) => (
-                <button key={c.userId} onClick={() => selectContact(c)} className="flex items-center gap-3 w-full p-3 rounded-lg hover:bg-slate-50 text-left transition-colors">
+                <button key={c.userId} onClick={() => selectContact(c)} className="flex items-center gap-3 w-full p-3 rounded-lg hover:bg-slate-50 text-left transition-colors touch-manipulation">
                   <Avatar name={c.name} size="sm" />
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-slate-900">{c.name}</p>
-                    {c.projectName && <p className="text-xs text-slate-400">{c.projectName}</p>}
+                    <p className="text-sm font-medium text-slate-900 truncate">{c.name}</p>
+                    {c.projectName && <p className="text-xs text-slate-400 truncate">{c.projectName}</p>}
                   </div>
-                  <Badge variant="secondary" className="text-[10px]">{c.role}</Badge>
+                  <Badge variant="secondary" className="text-[10px] shrink-0">{c.role}</Badge>
                 </button>
               ))}
             </div>
