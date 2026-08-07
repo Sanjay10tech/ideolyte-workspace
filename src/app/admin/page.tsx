@@ -12,6 +12,7 @@ import { useAuth } from "@/components/providers/auth-provider";
 import { CardSkeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/client";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { RevenueChart, ProjectStatusChart, TeamWorkloadChart } from "@/components/admin/analytics-charts";
 
 type Project = { id: string; name: string; status: string; progress: number; deadline: string | null; clients: { company: string; profiles: { full_name: string } } };
 type Invoice = { id: string; invoice_number: string; total_amount: number; status: string; clients: { profiles: { full_name: string } }; projects: { name: string } | null };
@@ -82,6 +83,13 @@ export default function AdminDashboardPage() {
             <StatCard title="Pending Payments" value={formatCurrency(stats.pending)} icon={CreditCard} accent="amber" />
             <StatCard title="Completed" value={stats.completed.toString()} icon={CheckCircle2} accent="purple" />
           </div>
+
+          {/* Analytics */}
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <div className="lg:col-span-2"><RevenueChart /></div>
+            <div><ProjectStatusChart /></div>
+          </div>
+          <TeamWorkloadChart />
 
           {/* Main Grid */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
