@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { toast } from "sonner";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -20,15 +19,7 @@ export default function ClientProjectsPage() {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    try {
-      setLoading(true);
-      const data = await getClientProjects();
-      setProjects(data as Project[]);
-    } catch {
-      toast.error("Failed to load projects");
-    } finally {
-      setLoading(false);
-    }
+    try { setLoading(true); const data = await getClientProjects(); setProjects(data as Project[]); } catch { /* empty state will show */ } finally { setLoading(false); }
   }, []);
 
   useEffect(() => { load(); }, [load]);

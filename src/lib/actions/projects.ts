@@ -60,25 +60,27 @@ export async function getProjectById(id: string) {
 export async function getClientProjects() {
   const supabase = await createClient();
 
-  // Get current user's client_id
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
 
-  const { data: client } = await supabase
+  const { data: client, error: clientError } = await supabase
     .from("clients")
     .select("id")
     .eq("profile_id", user.id)
     .single();
 
-  if (!client) return [];
+  if (clientError || !client) return [];
 
   const { data, error } = await supabase
     .from("projects")
-    .select("*")
-    .eq("client_id", client.id)
+    .select("id, name, description, status, progress, budget, start_date, deadline")
+    .eq("client_id", (client as { id: string }).id)
     .order("created_at", { ascending: false });
 
-  if (error) throw error;
+  if (error) {
+    console.error("getClientProjects error:", error.message);
+    return [];
+  }
   return data || [];
 }
 

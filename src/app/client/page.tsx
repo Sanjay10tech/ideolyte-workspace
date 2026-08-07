@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { toast } from "sonner";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -9,15 +8,12 @@ import { useAuth } from "@/components/providers/auth-provider";
 import { CardSkeleton } from "@/components/ui/skeleton";
 import { getClientProjects } from "@/lib/actions/projects";
 import { formatDate } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/client";
 
 type Project = { id: string; name: string; status: string; progress: number; deadline: string | null; budget: number | null; start_date: string | null; description: string | null };
-type ActivityLog = { id: string; action: string; entity_type: string; metadata: Record<string, unknown> | null; created_at: string };
 
 export default function ClientDashboardPage() {
   const { profile } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
-  const [activities, setActivities] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
   const firstName = profile?.full_name?.split(" ")[0] || "there";
 
@@ -26,17 +22,8 @@ export default function ClientDashboardPage() {
       setLoading(true);
       const p = await getClientProjects();
       setProjects(p as Project[]);
-
-      // Load activities for client
-      const supabase = createClient();
-      const { data: logs } = await supabase
-        .from("activity_logs")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(6);
-      setActivities((logs || []) as unknown as ActivityLog[]);
     } catch {
-      toast.error("Failed to load dashboard data");
+      // Silently handle - empty state will show
     } finally {
       setLoading(false);
     }
@@ -113,23 +100,7 @@ export default function ClientDashboardPage() {
               <CardTitle className="text-base">Recent Activity</CardTitle>
             </CardHeader>
             <CardContent>
-              {activities.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-4">No recent activity</p>
-              ) : (
-                <div className="space-y-4">
-                  {activities.map((a) => (
-                    <div key={a.id} className="flex items-start gap-3">
-                      <div className="h-2 w-2 rounded-full bg-[#1e293b] mt-1.5 shrink-0" />
-                      <div>
-                        <p className="text-sm text-gray-700">
-                          {a.action.replace("_", " ")} — {a.entity_type}
-                        </p>
-                        <p className="text-xs text-gray-400">{formatDate(a.created_at)}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <p className="text-sm text-gray-400 text-center py-4">Activity updates will appear here</p>
             </CardContent>
           </Card>
         </div>
