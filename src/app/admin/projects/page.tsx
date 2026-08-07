@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Plus, Search, FolderKanban, Edit, Archive, Eye } from "lucide-react";
+import { Plus, Search, FolderKanban, Edit, Archive, Eye, Users2 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,12 +9,14 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
+import { Avatar } from "@/components/ui/avatar";
 import { PageHeader } from "@/components/shared/page-header";
 import { CardSkeleton, EmptyState } from "@/components/ui/skeleton";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ProjectFormDialog } from "@/components/admin/project-form-dialog";
 import { getProjects, archiveProjectAction, type ProjectWithClient } from "@/lib/actions/projects";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 
 const statusColors: Record<string, string> = {
   planning: "bg-gray-50 text-gray-700 border-gray-200",
@@ -33,12 +35,27 @@ export default function ProjectsPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editProject, setEditProject] = useState<ProjectWithClient | null>(null);
   const [archiveId, setArchiveId] = useState<string | null>(null);
+  const [projectTeams, setProjectTeams] = useState<Record<string, { name: string }[]>>({});
 
   const loadProjects = useCallback(async () => {
     try {
       setLoading(true);
       const data = await getProjects(search || undefined, statusFilter);
       setProjects(data);
+      // Load team members for each project
+      if (data.length > 0) {
+        const supabase = createClient();
+        const { data: members } = await supabase
+          .from("project_members")
+          .select("project_id, team_members(profiles(full_name))")
+          .in("project_id", data.map(p => p.id));
+        const teamMap: Record<string, { name: string }[]> = {};
+        for (const m of (members || []) as unknown as { project_id: string; team_members: { profiles: { full_name: string } } }[]) {
+          if (!teamMap[m.project_id]) teamMap[m.project_id] = [];
+          teamMap[m.project_id].push({ name: m.team_members.profiles.full_name });
+        }
+        setProjectTeams(teamMap);
+      }
     } catch {
       toast.error("Failed to load projects");
     } finally {
@@ -139,8 +156,29 @@ export default function ProjectsPage() {
                     {project.budget && <span className="font-medium text-gray-700">{formatCurrency(project.budget)}</span>}
                     {project.deadline && <span>Due {formatDate(project.deadline)}</span>}
                   </div>
+                  {/* Team */}
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-50">
+                    <div className="flex items-center gap-1">
+                      <Users2 className="h-3 w-3 text-slate-400" />
+                      {(projectTeams[project.id] || []).length > 0 ? (
+                        <div className="flex items-center -space-x-1.5">
+                          {(projectTeams[project.id] || []).slice(0, 3).map((m, i) => (
+                            <Avatar key={i} name={m.name} size="sm" className="h-6 w-6 text-[9px] border-2 border-white" />
+                          ))}
+                          {(projectTeams[project.id] || []).length > 3 && (
+                            <span className="text-[10px] text-slate-500 ml-1.5">+{(projectTeams[project.id] || []).length - 3}</span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-[11px] text-slate-400">Not assigned</span>
+                      )}
+                    </div>
+                    <Link href={`/admin/projects/${project.id}`} className="text-[11px] text-blue-600 hover:text-blue-700 font-medium">
+                      {(projectTeams[project.id] || []).length === 0 ? "Assign" : "Manage"}
+                    </Link>
+                  </div>
                   {/* Actions */}
-                  <div className="pt-2 border-t border-gray-50 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="pt-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Link href={`/admin/projects/${project.id}`}>
                       <Button variant="ghost" size="sm" className="h-7 text-xs">
                         <Eye className="h-3 w-3 mr-1" /> View
