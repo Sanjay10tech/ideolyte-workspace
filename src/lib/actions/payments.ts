@@ -17,17 +17,21 @@ export interface PaymentWithInvoice {
   clients: { company: string; profiles: { full_name: string } };
 }
 
-export async function getPayments() {
+export async function getPayments(): Promise<PaymentWithInvoice[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("payments")
-    .select("*, invoices(invoice_number, total_amount), clients(company, profiles(full_name))")
+    .select("id, invoice_id, client_id, amount, payment_method, transaction_id, notes, paid_at, created_at, invoices(invoice_number, total_amount), clients(company, profiles(full_name))")
     .order("paid_at", { ascending: false });
-  if (error) throw error;
+
+  if (error) {
+    console.error("getPayments error:", error.message);
+    return [];
+  }
   return (data || []) as unknown as PaymentWithInvoice[];
 }
 
-export async function recordPaymentAction(formData: FormData) {
+export async function recordPaymentAction(formData: FormData): Promise<{ success?: boolean; error?: string }> {
   const supabase = await createAdminClient();
 
   const invoice_id = formData.get("invoice_id") as string;
@@ -38,18 +42,52 @@ export async function recordPaymentAction(formData: FormData) {
   const notes = (formData.get("notes") as string) || null;
   const paid_at = (formData.get("paid_at") as string) || new Date().toISOString();
 
-  const { error } = await supabase
+  if (!invoice_id || !client_id || !amount || amount <= 0) {
+    return { error: "Invoice, client and valid amount are required" };
+  }
+
+  // Insert payment record
+  const { error: payError } = await supabase
     .from("payments")
     .insert({ invoice_id, client_id, amount, payment_method, transaction_id, notes, paid_at });
 
-  if (error) return { error: error.message };
+  if (payError) return { error: `Payment insert failed: ${payError.message}` };
 
   // Update invoice paid_amount and status
-  const { data: invoice } = await supabase.from("invoices").select("total_amount, paid_amount").eq("id", invoice_id).single();
+  const { data: invoice, error: invError } = await supabase
+    .from("invoices")
+    .select("total_amount, paid_amount")
+    .eq("id", invoice_id)
+    .single();
+
+  if (invError) return { error: `Invoice lookup failed: ${invError.message}` };
+
   if (invoice) {
-    const newPaid = (invoice.paid_amount || 0) + amount;
-    const newStatus = newPaid >= invoice.total_amount ? "paid" : "pending";
-    await supabase.from("invoices").update({ paid_amount: newPaid, status: newStatus, paid_date: newStatus === "paid" ? new Date().toISOString().split("T")[0] : null }).eq("id", invoice_id);
+    const totalAmount = Number(invoice.total_amount) || 0;
+    const currentPaid = Number(invoice.paid_amount) || 0;
+    const newPaid = currentPaid + amount;
+
+    let newStatus: string;
+    if (newPaid >= totalAmount) {
+      newStatus = "paid";
+    } else if (newPaid > 0) {
+      newStatus = "pending"; // partially paid
+    } else {
+      newStatus = "draft";
+    }
+
+    const { error: updateError } = await supabase
+      .from("invoices")
+      .update({
+        paid_amount: newPaid,
+        status: newStatus,
+        paid_date: newStatus === "paid" ? new Date().toISOString().split("T")[0] : null,
+      })
+      .eq("id", invoice_id);
+
+    if (updateError) {
+      console.error("Invoice update error:", updateError.message);
+    }
   }
 
   // Log activity
@@ -66,6 +104,7 @@ export async function recordPaymentAction(formData: FormData) {
 
   revalidatePath("/admin/payments");
   revalidatePath("/admin/invoices");
+  revalidatePath("/admin");
   revalidatePath("/client");
   return { success: true };
 }
