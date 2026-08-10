@@ -13,7 +13,7 @@ import { TableSkeleton, EmptyState } from "@/components/ui/skeleton";
 import { Dialog, DialogHeader, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { getProjectFiles, uploadFileAction, deleteFileAction, type ProjectFile } from "@/lib/actions/files";
+import { getProjectFiles, deleteFileAction, type ProjectFile } from "@/lib/actions/files";
 import { getProjects, type ProjectWithClient } from "@/lib/actions/projects";
 import { formatDate } from "@/lib/utils";
 
@@ -33,12 +33,56 @@ export default function DocumentsPage() {
   async function handleUpload(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setUploading(true);
-    const formData = new FormData(e.currentTarget);
-    const result = await uploadFileAction(formData);
-    setUploading(false);
-    if (result.error) { toast.error(result.error); return; }
-    toast.success("File uploaded successfully");
-    setUploadOpen(false); load();
+
+    const form = e.currentTarget;
+    const projectId = (form.elements.namedItem("project_id") as HTMLSelectElement)?.value;
+    const fileInput = form.elements.namedItem("file") as HTMLInputElement;
+    const category = (form.elements.namedItem("category") as HTMLInputElement)?.value || null;
+    const file = fileInput?.files?.[0];
+
+    if (!file || !projectId) {
+      toast.error("Please select a project and file");
+      setUploading(false);
+      return;
+    }
+
+    try {
+      // Upload directly to Supabase Storage from browser (bypasses Vercel 4.5MB limit)
+      const { createClient: createBrowserClient } = await import("@/lib/supabase/client");
+      const supabase = createBrowserClient();
+      const filePath = `${projectId}/${Date.now()}-${file.name}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("project-files")
+        .upload(filePath, file);
+
+      if (uploadError) {
+        toast.error(uploadError.message);
+        setUploading(false);
+        return;
+      }
+
+      const { data: urlData } = supabase.storage.from("project-files").getPublicUrl(filePath);
+
+      // Save file metadata via server action (small payload)
+      const { saveFileMetadata } = await import("@/lib/actions/files");
+      const result = await saveFileMetadata({
+        project_id: projectId,
+        name: file.name,
+        file_url: urlData.publicUrl,
+        file_size: file.size,
+        file_type: file.type || "application/octet-stream",
+        category,
+      });
+
+      setUploading(false);
+      if (result.error) { toast.error(result.error); return; }
+      toast.success("File uploaded successfully");
+      setUploadOpen(false); load();
+    } catch (err) {
+      setUploading(false);
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    }
   }
 
   async function handleDelete() {

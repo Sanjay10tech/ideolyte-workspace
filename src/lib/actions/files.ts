@@ -104,3 +104,35 @@ export async function deleteFileAction(fileId: string, filePath: string) {
   revalidatePath("/client/files");
   return { success: true };
 }
+
+/**
+ * Save file metadata only (file already uploaded from browser directly to Supabase Storage)
+ */
+export async function saveFileMetadata(input: {
+  project_id: string;
+  name: string;
+  file_url: string;
+  file_size: number;
+  file_type: string;
+  category: string | null;
+}): Promise<{ success?: boolean; error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { error } = await supabase.from("project_files").insert({
+    project_id: input.project_id,
+    uploaded_by: user.id,
+    name: input.name,
+    file_url: input.file_url,
+    file_size: input.file_size,
+    file_type: input.file_type,
+    category: input.category,
+  });
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/documents");
+  revalidatePath("/client/files");
+  return { success: true };
+}
