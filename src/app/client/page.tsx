@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatCard } from "@/components/shared/stat-card";
 import { useAuth } from "@/components/providers/auth-provider";
-import { CardSkeleton, Skeleton } from "@/components/ui/skeleton";
+import { CardSkeleton } from "@/components/ui/skeleton";
 import { getClientDashboardData, type ClientDashboardData } from "@/lib/actions/client-dashboard";
 import { formatDate } from "@/lib/utils";
 
