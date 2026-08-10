@@ -44,7 +44,8 @@ export default function ClientDashboardPage() {
   const projects = data?.projects || [];
   const taskStats = data?.taskStats || { total: 0, completed: 0, inProgress: 0, review: 0, todo: 0 };
   const milestones = data?.milestones || [];
-  const activeProjects = projects.filter(p => p.status !== "cancelled");
+  const activeProjects = projects.filter(p => p.status === "in-progress" || p.status === "planning" || p.status === "review" || p.status === "on-hold");
+  const completedProjects = projects.filter(p => p.status === "completed");
 
   const statusColor = (s: string) => {
     if (s === "in-progress") return "bg-blue-50 text-blue-700 border-blue-200";
@@ -85,23 +86,23 @@ export default function ClientDashboardPage() {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)}</div>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatCard title="Projects" value={projects.length.toString()} icon={FolderKanban} accent="blue" />
-          <StatCard title="Total Tasks" value={taskStats.total.toString()} icon={ListTodo} accent="purple" />
-          <StatCard title="Completed" value={taskStats.completed.toString()} icon={CheckCircle2} accent="green" />
-          <StatCard title="Remaining" value={(taskStats.total - taskStats.completed).toString()} icon={Clock} accent="amber" />
+          <StatCard title="Total Projects" value={projects.length.toString()} icon={FolderKanban} accent="blue" />
+          <StatCard title="Active" value={activeProjects.length.toString()} icon={ListTodo} accent="purple" />
+          <StatCard title="Completed" value={completedProjects.length.toString()} icon={CheckCircle2} accent="green" />
+          <StatCard title="Tasks Remaining" value={(taskStats.total - taskStats.completed).toString()} icon={Clock} accent="amber" />
         </div>
       )}
 
       {/* Active Projects */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-[15px] font-semibold text-slate-900">Active Projects</h2>
-          {projects.length > 2 && <Link href="/client/projects"><Button variant="ghost" size="sm" className="text-xs text-blue-600">View All</Button></Link>}
+          <h2 className="text-[15px] font-semibold text-slate-900">Active Projects ({activeProjects.length})</h2>
+          {projects.length > 3 && <Link href="/client/projects"><Button variant="ghost" size="sm" className="text-xs text-blue-600">View All</Button></Link>}
         </div>
         {loading ? (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"><CardSkeleton /><CardSkeleton /></div>
         ) : activeProjects.length === 0 ? (
-          <Card><CardContent className="p-6 text-center"><p className="text-sm text-slate-400">No projects assigned yet.</p></CardContent></Card>
+          <Card><CardContent className="p-6 text-center"><p className="text-sm text-slate-400">No active projects right now.</p></CardContent></Card>
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {activeProjects.slice(0, 6).map((project) => (
@@ -124,6 +125,26 @@ export default function ClientDashboardPage() {
           </div>
         )}
       </div>
+
+      {/* Completed Projects */}
+      {!loading && completedProjects.length > 0 && (
+        <div>
+          <h2 className="text-[15px] font-semibold text-slate-900 mb-4">Completed Projects ({completedProjects.length})</h2>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {completedProjects.slice(0, 6).map((project) => (
+              <Card key={project.id} className="border-emerald-100/60">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-slate-900 truncate">{project.name}</p>
+                    {project.deadline && <p className="text-xs text-slate-400">Completed · Due {formatDate(project.deadline)}</p>}
+                  </div>
+                  <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 border text-[10px] shrink-0">100%</Badge>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Analytics Charts */}
       {!loading && (taskStats.total > 0 || projects.length > 0 || milestones.length > 0) && (
