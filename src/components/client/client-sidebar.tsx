@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Activity, FolderKanban, LayoutDashboard, CheckSquare, Flag, MessageSquare, FileText, Receipt, FileSignature, HelpCircle, X } from "lucide-react";
+import { Home, Activity, FolderKanban, LayoutDashboard, CheckSquare, Flag, MessageSquare, FileText, Receipt, FileSignature, HelpCircle, FileCheck, X } from "lucide-react";
 import { cn, getInitials } from "@/lib/utils";
 import { useAuth } from "@/components/providers/auth-provider";
 import { BrandLogo } from "@/components/shared/brand-logo";
@@ -18,6 +18,7 @@ const navItems = [
   { href: "/client/files", label: "Files", icon: FileText },
   { href: "/client/invoices", label: "Invoices", icon: Receipt },
   { href: "/client/agreement", label: "Agreement", icon: FileSignature },
+  { href: "/client/reviews", label: "Reviews", icon: FileCheck },
   { href: "/client/support", label: "Support", icon: HelpCircle },
 ];
 
