@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { AlertCircle, Mail, Lock, Eye, EyeOff, ArrowRight, Shield, LayoutGrid, Users2, Package, CheckCircle2 } from "lucide-react";
@@ -24,16 +24,79 @@ function LoginFormInner({ role: initialRole }: LoginPageShellProps) {
   const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [capsLock, setCapsLock] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [shakeError, setShakeError] = useState(false);
   const searchParams = useSearchParams();
   const message = searchParams.get("message");
   const config = roleConfig[role];
+  const styleRef = useRef<HTMLStyleElement | null>(null);
 
+  // Inject keyframe animations into head (guaranteed to work)
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.textContent = `
+      @keyframes iw-drift {
+        0% { transform: translate(0, 0) scale(1); }
+        33% { transform: translate(12px, -8px) scale(1.02); }
+        66% { transform: translate(-8px, 6px) scale(0.98); }
+        100% { transform: translate(0, 0) scale(1); }
+      }
+      @keyframes iw-drift2 {
+        0% { transform: translate(0, 0); }
+        50% { transform: translate(-15px, 10px); }
+        100% { transform: translate(0, 0); }
+      }
+      @keyframes iw-drift3 {
+        0% { transform: translate(0, 0); }
+        50% { transform: translate(10px, -12px); }
+        100% { transform: translate(0, 0); }
+      }
+      @keyframes iw-travel {
+        0% { left: -8px; opacity: 0; }
+        15% { opacity: 1; }
+        85% { opacity: 1; }
+        100% { left: 100%; opacity: 0; }
+      }
+      @keyframes iw-shake {
+        0%, 100% { transform: translateX(0); }
+        20% { transform: translateX(-3px); }
+        40% { transform: translateX(3px); }
+        60% { transform: translateX(-2px); }
+        80% { transform: translateX(2px); }
+      }
+      @keyframes iw-pulse-ring {
+        0% { transform: scale(1); opacity: 0.4; }
+        50% { transform: scale(1.08); opacity: 0.2; }
+        100% { transform: scale(1); opacity: 0.4; }
+      }
+    `;
+    document.head.appendChild(style);
+    styleRef.current = style;
+    return () => { if (styleRef.current) document.head.removeChild(styleRef.current); };
+  }, []);
+
+  // Trigger mount animation
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), 50);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Caps lock detection
   useEffect(() => {
     const handler = (e: KeyboardEvent) => setCapsLock(e.getModifierState("CapsLock"));
     window.addEventListener("keydown", handler);
     window.addEventListener("keyup", handler);
     return () => { window.removeEventListener("keydown", handler); window.removeEventListener("keyup", handler); };
   }, []);
+
+  // Shake error animation
+  useEffect(() => {
+    if (error) {
+      setShakeError(true);
+      const t = setTimeout(() => setShakeError(false), 300);
+      return () => clearTimeout(t);
+    }
+  }, [error]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -49,23 +112,46 @@ function LoginFormInner({ role: initialRole }: LoginPageShellProps) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 relative overflow-hidden bg-[#f7f8fc]">
-      {/* Animated background glows */}
-      <div className="fixed top-[-15%] left-[-8%] w-[500px] h-[500px] rounded-full bg-blue-100/30 blur-[100px] pointer-events-none animate-drift" />
-      <div className="fixed bottom-[-10%] right-[-5%] w-[450px] h-[450px] rounded-full bg-violet-100/25 blur-[90px] pointer-events-none animate-drift delay-300" style={{ animationDuration: "15s" }} />
-      <div className="fixed top-[40%] right-[15%] w-[250px] h-[250px] rounded-full bg-emerald-50/30 blur-[70px] pointer-events-none animate-drift delay-500" style={{ animationDuration: "10s" }} />
+    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 relative overflow-hidden" style={{ background: "#f7f8fc" }}>
+      {/* Animated background glows - using inline animation */}
+      <div style={{
+        position: "fixed", top: "-15%", left: "-8%", width: 500, height: 500,
+        borderRadius: "50%", background: "rgba(191, 219, 254, 0.25)", filter: "blur(100px)",
+        pointerEvents: "none", animation: "iw-drift 14s ease-in-out infinite",
+      }} />
+      <div style={{
+        position: "fixed", bottom: "-10%", right: "-5%", width: 450, height: 450,
+        borderRadius: "50%", background: "rgba(221, 214, 254, 0.2)", filter: "blur(90px)",
+        pointerEvents: "none", animation: "iw-drift2 18s ease-in-out infinite",
+      }} />
+      <div style={{
+        position: "fixed", top: "40%", right: "15%", width: 250, height: 250,
+        borderRadius: "50%", background: "rgba(209, 250, 229, 0.2)", filter: "blur(70px)",
+        pointerEvents: "none", animation: "iw-drift3 12s ease-in-out infinite",
+      }} />
 
-      {/* Main Container */}
-      <div className="relative z-10 w-full max-w-[1200px] grid grid-cols-1 lg:grid-cols-[52fr_48fr] bg-white/90 backdrop-blur-sm border border-slate-200/50 rounded-[22px] shadow-[0_8px_40px_rgba(0,0,0,0.04)] overflow-hidden animate-scale-in">
+      {/* Main Container with entrance animation */}
+      <div
+        className="relative z-10 w-full max-w-[1200px] grid grid-cols-1 lg:grid-cols-[52fr_48fr] bg-white/90 backdrop-blur-sm border border-slate-200/50 rounded-[22px] shadow-[0_8px_40px_rgba(0,0,0,0.04)] overflow-hidden"
+        style={{
+          opacity: mounted ? 1 : 0,
+          transform: mounted ? "translateY(0) scale(1)" : "translateY(14px) scale(0.98)",
+          transition: "opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
+        }}
+      >
 
         {/* Left Brand Section */}
         <div className="hidden lg:flex flex-col justify-between p-10 xl:p-12 relative overflow-hidden">
           {/* Faint watermark */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[180px] font-bold text-slate-100/40 select-none pointer-events-none leading-none">iW</div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 select-none pointer-events-none leading-none"
+            style={{ fontSize: 180, fontWeight: 700, color: "rgba(241, 245, 249, 0.5)" }}>iW</div>
 
           {/* Logo */}
-          <div className="relative flex items-center gap-2.5 animate-fade-in">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-md shadow-blue-600/10 animate-scale-in">
+          <div className="relative flex items-center gap-2.5" style={{
+            opacity: mounted ? 1 : 0, transform: mounted ? "scale(1)" : "scale(0.9)",
+            transition: "all 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.2s",
+          }}>
+            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-md shadow-blue-600/10">
               <span className="text-sm font-bold text-white tracking-tight">iW</span>
             </div>
             <div>
@@ -75,7 +161,10 @@ function LoginFormInner({ role: initialRole }: LoginPageShellProps) {
           </div>
 
           {/* Welcome + Tagline */}
-          <div className="relative space-y-4 my-6 animate-fade-up delay-150">
+          <div className="relative space-y-4 my-6" style={{
+            opacity: mounted ? 1 : 0, transform: mounted ? "translateY(0)" : "translateY(16px)",
+            transition: "all 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.3s",
+          }}>
             <h1 className="text-[32px] xl:text-[36px] font-bold text-slate-900 leading-[1.15]">Welcome Back!</h1>
             <p className="text-lg font-semibold bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
               Projects. People. Progress.
@@ -87,22 +176,32 @@ function LoginFormInner({ role: initialRole }: LoginPageShellProps) {
             {/* Workflow Visual */}
             <div className="pt-8 flex items-center gap-2">
               {[
-                { icon: Users2, label: "Client", bg: "bg-blue-50", text: "text-blue-600" },
-                { icon: Package, label: "Project", bg: "bg-violet-50", text: "text-violet-600" },
-                { icon: LayoutGrid, label: "Team", bg: "bg-emerald-50", text: "text-emerald-600" },
-                { icon: CheckCircle2, label: "Delivery", bg: "bg-amber-50", text: "text-amber-600" },
+                { icon: Users2, label: "Client", bg: "#eff6ff", text: "#2563eb" },
+                { icon: Package, label: "Project", bg: "#f5f3ff", text: "#7c3aed" },
+                { icon: LayoutGrid, label: "Team", bg: "#ecfdf5", text: "#059669" },
+                { icon: CheckCircle2, label: "Delivery", bg: "#fffbeb", text: "#d97706" },
               ].map((step, i) => (
                 <div key={step.label} className="flex items-center gap-2">
-                  <div className="flex flex-col items-center gap-1.5 animate-fade-up" style={{ animationDelay: `${300 + i * 150}ms` }}>
-                    <div className={`h-11 w-11 rounded-xl ${step.bg} ${step.text} flex items-center justify-center shadow-sm transition-transform hover:scale-110`}>
+                  <div className="flex flex-col items-center gap-1.5" style={{
+                    opacity: mounted ? 1 : 0,
+                    transform: mounted ? "translateY(0)" : "translateY(12px)",
+                    transition: `all 0.5s cubic-bezier(0.16, 1, 0.3, 1) ${0.5 + i * 0.15}s`,
+                  }}>
+                    <div className="h-11 w-11 rounded-xl flex items-center justify-center shadow-sm transition-transform hover:scale-110"
+                      style={{ background: step.bg, color: step.text }}>
                       <step.icon className="h-5 w-5" />
                     </div>
                     <span className="text-[10px] font-medium text-slate-500">{step.label}</span>
                   </div>
                   {i < 3 && (
-                    <div className="w-8 mb-5 relative overflow-hidden">
-                      <div className="border-t border-dashed border-slate-300 w-full" />
-                      <div className="absolute top-[-2px] left-[-12px] h-[5px] w-3 bg-gradient-to-r from-blue-500/50 to-transparent rounded-full animate-travel-right" style={{ animationDelay: `${i * 1.5}s` }} />
+                    <div className="w-8 mb-5 relative overflow-hidden" style={{ height: 4 }}>
+                      <div style={{ position: "absolute", top: "50%", left: 0, right: 0, borderTop: "1px dashed #cbd5e1" }} />
+                      <div style={{
+                        position: "absolute", top: 0, width: 10, height: 4,
+                        borderRadius: 4,
+                        background: "linear-gradient(to right, rgba(59,130,246,0.6), transparent)",
+                        animation: `iw-travel 4s ease-in-out infinite ${i * 1.3}s`,
+                      }} />
                     </div>
                   )}
                 </div>
@@ -111,7 +210,9 @@ function LoginFormInner({ role: initialRole }: LoginPageShellProps) {
           </div>
 
           {/* Features */}
-          <div className="relative flex items-start gap-6 pt-4">
+          <div className="relative flex items-start gap-6 pt-4" style={{
+            opacity: mounted ? 1 : 0, transition: "opacity 0.5s ease 1s",
+          }}>
             {[
               { icon: Shield, title: "Secure", desc: "Protected workspace access" },
               { icon: LayoutGrid, title: "Organized", desc: "Projects, tasks and files" },
@@ -145,14 +246,20 @@ function LoginFormInner({ role: initialRole }: LoginPageShellProps) {
           <div className="flex items-center rounded-xl bg-slate-100/70 p-1 mb-7">
             {([["admin", "Admin"], ["team_member", "Team"], ["client", "Client"]] as const).map(([key, label]) => (
               <button key={key} onClick={() => { setRole(key); setError(null); }}
-                className={`flex-1 py-2.5 px-3 rounded-lg text-[13px] font-medium transition-all duration-200 ${role === key ? "bg-white text-slate-900 shadow-sm border border-blue-100" : "text-slate-500 hover:text-slate-700"}`}>
+                className="flex-1 py-2.5 px-3 rounded-lg text-[13px] font-medium transition-all duration-200"
+                style={{
+                  background: role === key ? "#fff" : "transparent",
+                  color: role === key ? "#0f172a" : "#64748b",
+                  boxShadow: role === key ? "0 1px 3px rgba(0,0,0,0.06)" : "none",
+                  border: role === key ? "1px solid #dbeafe" : "1px solid transparent",
+                }}>
                 {label}
               </button>
             ))}
           </div>
 
-          {/* Heading */}
-          <div className="mb-6">
+          {/* Heading with role transition */}
+          <div className="mb-6" style={{ transition: "all 0.2s ease" }}>
             <h2 className="text-xl font-semibold text-slate-900">{config.heading}</h2>
             <p className="text-[13px] text-slate-500 mt-1">{config.subtitle}</p>
           </div>
@@ -165,7 +272,8 @@ function LoginFormInner({ role: initialRole }: LoginPageShellProps) {
             </div>
           )}
           {error && (
-            <div className="mb-5 flex items-center gap-2 rounded-xl bg-red-50 border border-red-200/60 px-4 py-3 animate-shake">
+            <div className="mb-5 flex items-center gap-2 rounded-xl bg-red-50 border border-red-200/60 px-4 py-3"
+              style={{ animation: shakeError ? "iw-shake 0.25s ease-in-out" : "none" }}>
               <AlertCircle className="h-4 w-4 text-red-500 shrink-0" />
               <p className="text-[13px] text-red-700">{error}</p>
             </div>
@@ -176,22 +284,31 @@ function LoginFormInner({ role: initialRole }: LoginPageShellProps) {
             <div>
               <label className="block text-[13px] font-medium text-slate-700 mb-1.5">Email Address</label>
               <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 transition-colors" />
                 <input name="email" type="email" required disabled={loading} autoComplete="email"
                   placeholder="you@company.com"
-                  className="w-full h-[48px] pl-10 pr-4 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/15 focus:border-blue-400 transition-all duration-200 disabled:opacity-50 shadow-sm shadow-slate-100/50" />
+                  className="w-full h-[48px] pl-10 pr-4 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 transition-all duration-200 disabled:opacity-50 shadow-sm shadow-slate-100/50"
+                  style={{ outline: "none" }}
+                  onFocus={e => { e.currentTarget.style.borderColor = "#60a5fa"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(59,130,246,0.1)"; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.boxShadow = "0 1px 2px rgba(241,245,249,0.5)"; }}
+                />
               </div>
             </div>
 
             <div>
               <label className="block text-[13px] font-medium text-slate-700 mb-1.5">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 transition-colors" />
                 <input name="password" type={showPassword ? "text" : "password"} required disabled={loading} minLength={6} autoComplete="current-password"
                   placeholder="••••••••"
-                  className="w-full h-[48px] pl-10 pr-11 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/15 focus:border-blue-400 transition-all duration-200 disabled:opacity-50 shadow-sm shadow-slate-100/50" />
+                  className="w-full h-[48px] pl-10 pr-11 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 transition-all duration-200 disabled:opacity-50 shadow-sm shadow-slate-100/50"
+                  style={{ outline: "none" }}
+                  onFocus={e => { e.currentTarget.style.borderColor = "#60a5fa"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(59,130,246,0.1)"; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.boxShadow = "0 1px 2px rgba(241,245,249,0.5)"; }}
+                />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} tabIndex={-1}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  style={{ transition: "all 0.15s ease" }}>
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
@@ -205,8 +322,24 @@ function LoginFormInner({ role: initialRole }: LoginPageShellProps) {
             )}
 
             <button type="submit" disabled={loading || success}
-              className="w-full h-[50px] rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-semibold flex items-center justify-center gap-2 shadow-lg shadow-blue-600/15 hover:shadow-xl hover:shadow-blue-600/20 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 disabled:opacity-60 disabled:hover:translate-y-0">
-              {loading ? <><LoadingSpinner size="sm" /> Signing in...</> : success ? <><CheckCircle2 className="h-4 w-4" /> Welcome to Ideolyte</> : <>Sign In <ArrowRight className="h-4 w-4" /></>}
+              className="w-full h-[50px] rounded-xl text-white text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-60"
+              style={{
+                background: success ? "#059669" : "linear-gradient(to right, #2563eb, #4f46e5)",
+                boxShadow: "0 8px 16px rgba(37,99,235,0.15)",
+                transform: "translateY(0)",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={e => { if (!loading && !success) { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 12px 24px rgba(37,99,235,0.2)"; } }}
+              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 8px 16px rgba(37,99,235,0.15)"; }}
+              onMouseDown={e => { e.currentTarget.style.transform = "translateY(0)"; }}
+            >
+              {loading ? (
+                <><LoadingSpinner size="sm" /> Signing in...</>
+              ) : success ? (
+                <><CheckCircle2 className="h-4 w-4" /> Welcome to Ideolyte</>
+              ) : (
+                <>Sign In <ArrowRight className="h-4 w-4" /></>
+              )}
             </button>
           </form>
 
@@ -219,7 +352,7 @@ function LoginFormInner({ role: initialRole }: LoginPageShellProps) {
 
 export function LoginPageShell(props: LoginPageShellProps) {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#f7f8fc]"><LoadingSpinner /></div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center" style={{ background: "#f7f8fc" }}><LoadingSpinner /></div>}>
       <LoginFormInner {...props} />
     </Suspense>
   );
