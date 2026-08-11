@@ -105,6 +105,9 @@ body {
 .animate-drift {
   animation: drift 12s ease-in-out infinite;
 }
+.animate-travel-right {
+  animation: travelRight 4s ease-in-out infinite;
+}
 
 /* Staggered delays */
 .delay-75 { animation-delay: 75ms; }

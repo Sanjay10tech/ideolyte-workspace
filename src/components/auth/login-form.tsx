@@ -102,7 +102,7 @@ function LoginFormInner({ role: initialRole }: LoginPageShellProps) {
                   {i < 3 && (
                     <div className="w-8 mb-5 relative overflow-hidden">
                       <div className="border-t border-dashed border-slate-300 w-full" />
-                      <div className="absolute top-[-2px] left-[-12px] h-[5px] w-3 bg-gradient-to-r from-blue-500/50 to-transparent rounded-full animate-[travelRight_4s_ease-in-out_infinite]" style={{ animationDelay: `${i * 1.5}s` }} />
+                      <div className="absolute top-[-2px] left-[-12px] h-[5px] w-3 bg-gradient-to-r from-blue-500/50 to-transparent rounded-full animate-travel-right" style={{ animationDelay: `${i * 1.5}s` }} />
                     </div>
                   )}
                 </div>
