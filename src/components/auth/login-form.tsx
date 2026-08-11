@@ -64,8 +64,8 @@ function LoginFormInner({ role: initialRole }: LoginPageShellProps) {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[180px] font-bold text-slate-100/40 select-none pointer-events-none leading-none">iW</div>
 
           {/* Logo */}
-          <div className="relative flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-md shadow-blue-600/10">
+          <div className="relative flex items-center gap-2.5 animate-fade-in">
+            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-md shadow-blue-600/10 animate-scale-in">
               <span className="text-sm font-bold text-white tracking-tight">iW</span>
             </div>
             <div>
@@ -93,16 +93,16 @@ function LoginFormInner({ role: initialRole }: LoginPageShellProps) {
                 { icon: CheckCircle2, label: "Delivery", bg: "bg-amber-50", text: "text-amber-600" },
               ].map((step, i) => (
                 <div key={step.label} className="flex items-center gap-2">
-                  <div className="flex flex-col items-center gap-1.5">
-                    <div className={`h-11 w-11 rounded-xl ${step.bg} ${step.text} flex items-center justify-center shadow-sm`}>
+                  <div className="flex flex-col items-center gap-1.5 animate-fade-up" style={{ animationDelay: `${300 + i * 150}ms` }}>
+                    <div className={`h-11 w-11 rounded-xl ${step.bg} ${step.text} flex items-center justify-center shadow-sm transition-transform hover:scale-110`}>
                       <step.icon className="h-5 w-5" />
                     </div>
                     <span className="text-[10px] font-medium text-slate-500">{step.label}</span>
                   </div>
                   {i < 3 && (
-                    <div className="w-8 mb-5 relative">
+                    <div className="w-8 mb-5 relative overflow-hidden">
                       <div className="border-t border-dashed border-slate-300 w-full" />
-                      <div className="absolute top-[-2px] left-0 h-[5px] w-3 bg-gradient-to-r from-blue-400/40 to-transparent rounded-full animate-pulse" style={{ animationDuration: `${3 + i}s` }} />
+                      <div className="absolute top-[-2px] left-[-12px] h-[5px] w-3 bg-gradient-to-r from-blue-500/50 to-transparent rounded-full animate-[travelRight_4s_ease-in-out_infinite]" style={{ animationDelay: `${i * 1.5}s` }} />
                     </div>
                   )}
                 </div>
@@ -165,7 +165,7 @@ function LoginFormInner({ role: initialRole }: LoginPageShellProps) {
             </div>
           )}
           {error && (
-            <div className="mb-5 flex items-center gap-2 rounded-xl bg-red-50 border border-red-200/60 px-4 py-3">
+            <div className="mb-5 flex items-center gap-2 rounded-xl bg-red-50 border border-red-200/60 px-4 py-3 animate-shake">
               <AlertCircle className="h-4 w-4 text-red-500 shrink-0" />
               <p className="text-[13px] text-red-700">{error}</p>
             </div>
