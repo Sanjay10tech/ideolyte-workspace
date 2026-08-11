@@ -91,7 +91,7 @@ export default function TasksPage() {
           <EmptyState title="No tasks yet" description="Create tasks from project pages or add one here" icon={<CheckSquare className="h-10 w-10" />} />
         </CardContent></Card>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4 overflow-x-auto pb-2">
           {columns.map((column) => {
             const colTasks = tasks.filter((t) => t.status === column.key);
             return (

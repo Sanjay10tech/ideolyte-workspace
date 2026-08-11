@@ -32,12 +32,13 @@ body {
 
 /* Touch targets */
 @media (pointer: coarse) {
-  button, a, [role="button"] {
-    min-height: 44px;
-    min-width: 44px;
+  button:not([class*="h-"]):not([class*="size-"]),
+  a:not([class*="h-"]):not([class*="text-"]),
+  [role="button"]:not([class*="h-"]) {
+    min-height: 40px;
   }
   input, select, textarea {
-    font-size: 16px; /* Prevents zoom on iOS */
+    font-size: 16px;
   }
 }
 
