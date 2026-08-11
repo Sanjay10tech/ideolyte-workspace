@@ -22,7 +22,7 @@ export function StatCard({ title, value, icon: Icon, trend, trendUp, accent = "b
   const style = accentStyles[accent];
 
   return (
-    <div className="rounded-xl border border-slate-100 bg-white p-5 hover:shadow-sm transition-shadow">
+    <div className="rounded-xl border border-slate-100 bg-white p-5 hover:shadow-sm transition-all duration-200 animate-fade-up">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-[13px] text-slate-500 font-medium">{title}</p>

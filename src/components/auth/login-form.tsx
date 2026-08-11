@@ -50,13 +50,13 @@ function LoginFormInner({ role: initialRole }: LoginPageShellProps) {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 relative overflow-hidden bg-[#f7f8fc]">
-      {/* Subtle background glows */}
-      <div className="fixed top-[-15%] left-[-8%] w-[500px] h-[500px] rounded-full bg-blue-100/30 blur-[100px] pointer-events-none" />
-      <div className="fixed bottom-[-10%] right-[-5%] w-[450px] h-[450px] rounded-full bg-violet-100/25 blur-[90px] pointer-events-none" />
-      <div className="fixed top-[40%] right-[15%] w-[250px] h-[250px] rounded-full bg-emerald-50/30 blur-[70px] pointer-events-none" />
+      {/* Animated background glows */}
+      <div className="fixed top-[-15%] left-[-8%] w-[500px] h-[500px] rounded-full bg-blue-100/30 blur-[100px] pointer-events-none animate-drift" />
+      <div className="fixed bottom-[-10%] right-[-5%] w-[450px] h-[450px] rounded-full bg-violet-100/25 blur-[90px] pointer-events-none animate-drift delay-300" style={{ animationDuration: "15s" }} />
+      <div className="fixed top-[40%] right-[15%] w-[250px] h-[250px] rounded-full bg-emerald-50/30 blur-[70px] pointer-events-none animate-drift delay-500" style={{ animationDuration: "10s" }} />
 
       {/* Main Container */}
-      <div className="relative z-10 w-full max-w-[1200px] grid grid-cols-1 lg:grid-cols-[52fr_48fr] bg-white/90 backdrop-blur-sm border border-slate-200/50 rounded-[22px] shadow-[0_8px_40px_rgba(0,0,0,0.04)] overflow-hidden">
+      <div className="relative z-10 w-full max-w-[1200px] grid grid-cols-1 lg:grid-cols-[52fr_48fr] bg-white/90 backdrop-blur-sm border border-slate-200/50 rounded-[22px] shadow-[0_8px_40px_rgba(0,0,0,0.04)] overflow-hidden animate-scale-in">
 
         {/* Left Brand Section */}
         <div className="hidden lg:flex flex-col justify-between p-10 xl:p-12 relative overflow-hidden">
@@ -75,7 +75,7 @@ function LoginFormInner({ role: initialRole }: LoginPageShellProps) {
           </div>
 
           {/* Welcome + Tagline */}
-          <div className="relative space-y-4 my-6">
+          <div className="relative space-y-4 my-6 animate-fade-up delay-150">
             <h1 className="text-[32px] xl:text-[36px] font-bold text-slate-900 leading-[1.15]">Welcome Back!</h1>
             <p className="text-lg font-semibold bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
               Projects. People. Progress.
